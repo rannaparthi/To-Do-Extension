@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>To-Do List</title>
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>To-Do List</h1>
+        <input type="text" id="taskInput" placeholder="Add a task...">
+        <button onclick="addTask()">Add</button>
+        <h2>Tasks To-Do:</h2>
+        <ul id="todoList"></ul>
+        <h2>Tasks Done:</h2>
+        <ul id="doneList"></ul>
+    </div>
+    <script>
+        function addTask() {
+            const taskInput = document.getElementById('taskInput').value;
+            fetch('/api/tasks/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'task': taskInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchTasks();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function fetchTasks() {
+            fetch('/api/tasks/todo')
+            .then(response => response.json())
+            .then(data => {
+                const todoList = document.getElementById('todoList');
+                todoList.innerHTML = '';
+                data.tasks.forEach(task => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<input type="checkbox" onclick="moveToDone(${task.id})">${task.task}`;
+                    todoList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+
+            fetch('/api/tasks/done')
+            .then(response => response.json())
+            .then(data => {
+                const doneList = document.getElementById('doneList');
+                doneList.innerHTML = '';
+                data.tasks.forEach(task => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<strike>${task.task}</strike>`;
+                    doneList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function moveToDone(taskId) {
+            fetch('/api/tasks/move_to_done', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'id': taskId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchTasks();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        fetchTasks();
+    </script>
+</body>
+</html>
